@@ -3,13 +3,14 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../config/uploadConfig');
 const uploadController = require('../controllers/uploadController');
+const { uploadSingleFile } = require('../middleware/uploadMiddleware');
 
 
-router.get('/', uploadController.readFile);
+router.get('/', uploadController.showForm);
 
 
 // Маршрут для загрузки файла
-router.post('/upload', upload.single('file'), uploadController.uploadFile);
+router.post('/upload', uploadSingleFile('file'), uploadController.uploadFile);
 
 
 

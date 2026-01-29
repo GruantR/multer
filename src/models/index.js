@@ -1,6 +1,10 @@
 //src/models/index.js
 const sequelize = require('../config/db');
+const File = require('./File');
 
+const models = {
+  File,
+}
 
 const initializeDatabase = async () => {
   try {
@@ -9,7 +13,7 @@ const initializeDatabase = async () => {
 
       const syncOptions = {
         alter: false, // ⚠️ Лучше false для безопасности
-        force: false, // ⚠️ Никогда true в продакшене!
+        force: true, // ⚠️ Никогда true в продакшене!
         logging: false
       };
       await sequelize.sync(syncOptions);
@@ -22,4 +26,8 @@ const initializeDatabase = async () => {
   }
 }
 
-module.exports = initializeDatabase;
+module.exports = {
+  sequelize,
+  ...models,
+  initializeDatabase
+};

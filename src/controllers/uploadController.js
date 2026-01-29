@@ -1,40 +1,41 @@
 const path = require('path');
+const fileService = require('../services/fileService')
 class uploadController {
 
-    async readFile(req, res){
-          res.sendFile(path.join(__dirname, '../views/upload-form.html'));
+    async showForm(req, res) {
+        res.sendFile(path.join(__dirname, '../views/upload-form.html'));
     }
 
 
 
     async uploadFile(req, res) {
         try {
-
-            // Проверяем, что файл был загружен
-            if (!req.file) {
-                return res.status(400).json({ error: 'Файл не загружен' });
-            }
+               //Используем сервис для сохранения в БД
+            const savedFile = await fileService.saveFile(req.file);
 
             // Информация о загруженном файле
-            const fileInfo = {
-                filename: req.file.filename,
-                originalName: req.file.originalname,
-                size: req.file.size,
-                mimetype: req.file.mimetype,
-                path: req.file.path,
-                uploadedAt: new Date()
+                   const fileInfo = {
+                id: savedFile.id,
+                uuid: savedFile.uuid,
+                filename: savedFile.fileName,
+                originalName: savedFile.originalName,
+                size: savedFile.size,
+                mimetype: savedFile.mimetype,
+                path: savedFile.path,
+                extension: savedFile.extension,
+                uploadedAt: savedFile.createdAt
             };
 
             console.log('Загружен файл:', fileInfo);
 
             // Пока просто возвращаем информацию о файле
-            res.json({
-                message: 'Файл успешно загружен',
+          res.json({
+                message: 'Файл успешно загружен и сохранен в базе данных',
                 file: fileInfo
             });
         }
         catch (err) {
-
+    next(err);
         }
     }
 }

@@ -1,46 +1,56 @@
-  //src/config/uploadConfig.js
-  const multer = require('multer'); 
-   const path = require('path');
- const UPLOAD_DIR = 'uploads/';
+//src/config/uploadConfig.js
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { InvalidFileTypeError, FileTooLargeError } = require('../errors/uploadError');
+const UPLOAD_DIR = 'uploads/';
 
-  const storage = multer.diskStorage({
-      destination: (req,file,cb)=>{
-          cb(null, UPLOAD_DIR)
-      },
-      filename: (req,file,cb)=>{
-      // Генерируем уникальное имя
-      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
-      cb(null, uniqueName);
-      }
-  });
+// Создаем папку uploads если её нет
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  console.log(`✓ Папка ${UPLOAD_DIR} создана`);
+}
 
-  const fileFilter = (req, file, cb)=>{
-        // Разрешаем только изображения и PDF
-    const allowedTypes = /jpeg|jpg|png|gif|pdf/;
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOAD_DIR)
+  },
+  filename: (req, file, cb) => {
+    // Генерируем уникальное имя
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+    cb(null, uniqueName);
+  }
+});
 
-    // Проверяем тип файла (MIME-тип)
-    const mimetype = allowedTypes.test(file.mimetype)
+const fileFilter = (req, file, cb) => {
+  // Разрешаем только изображения и PDF
+  const allowedTypes = /jpeg|jpg|png|gif|pdf/;
 
-    // Проверяем расширение (.jpg, .png и т.д.)
-    const extname = allowedTypes.test(path.extname(file.originalname).toLocaleLowerCase());
+  // Проверяем тип файла (MIME-тип)
+  const mimetype = allowedTypes.test(file.mimetype)
 
-      if (mimetype && extname) {
-      return cb(null, true); // Файл подходит, принимаем
-    } else {
-      cb(new Error('Недопустимый тип файла')); // Файл не подходит
-    }
-  } 
+  // Проверяем расширение (.jpg, .png и т.д.)
+  const extname = allowedTypes.test(path.extname(file.originalname).toLocaleLowerCase());
 
-  // Инициализация multer с настройками
-  const upload = multer({
-    storage: storage,
-    limits: {
-      fileSize: 5 * 1024 * 1024 // 5MB
-    },
-    fileFilter: fileFilter
-  });
+  if (mimetype && extname) {
+    return cb(null, true); // Файл подходит, принимаем
+  } else {
+    const error = new InvalidFileTypeError();
+    error.code = 'INVALID_FILE_TYPE';
+    cb(error, false);
+  }
+}
 
-  module.exports = upload;
+// Инициализация multer с настройками
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  },
+  fileFilter: fileFilter
+});
+
+module.exports = upload;
 
 
 
